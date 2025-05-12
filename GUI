@@ -1,0 +1,340 @@
+import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
+public class HealthManagementGUI {
+
+    private JPanel panelmain;
+    private JTextField textField1;
+    private JTextArea textArea1;
+    private JButton registerButton;
+    private JButton viewPatientsButton;
+    private JButton addDoctorButton;
+    private JButton viewDoctorsButton;
+    private JButton registerPatientButton;
+    private JButton admitInpatientButton;
+    private JTextField patientIDField;
+    private JTextField patientNameField;
+    private JTextField doctorIDField;
+    private JTextField doctorNameField;
+    private JTextArea outputArea;
+    private JButton scheduleAppointmentButton;
+    private List<Doctor> doctors;
+    private List<Patient> patients;
+
+    public HealthManagementGUI() {
+        doctors = new ArrayList<>();
+        patients = new ArrayList<>();
+        createUIComponents();
+    }
+
+    private boolean isPatientIDTaken(int patientID) {
+        for (Patient patient : patients) {
+            if (patient.getPatientID() == patientID) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isDoctorIDTaken(int doctorID) {
+        for (Doctor doctor : doctors) {
+            if (doctor.getDoctorID() == doctorID) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void createUIComponents() {
+        textField1 = new JTextField();
+        textArea1 = new JTextArea();
+        registerButton = new JButton("Register Patient");
+        viewPatientsButton = new JButton("View Patients");
+        addDoctorButton = new JButton("Add Doctor");
+        viewDoctorsButton = new JButton("View Doctors");
+        registerPatientButton = new JButton("Register Patient");
+        admitInpatientButton = new JButton("Admit Inpatient");
+        scheduleAppointmentButton = new JButton("Schedule Appointment");
+
+        panelmain = new JPanel();
+        panelmain.setLayout(new BorderLayout());
+        JPanel topPanel = new JPanel(new FlowLayout());
+
+        topPanel.add(new JLabel("Enter Patient ID: "));
+        patientIDField = new JTextField(10);
+        topPanel.add(patientIDField);
+
+        topPanel.add(new JLabel("Enter Patient Name: "));
+        patientNameField = new JTextField(10);
+        topPanel.add(patientNameField);
+
+        topPanel.add(registerButton);
+        topPanel.add(viewPatientsButton);
+        topPanel.add(addDoctorButton);
+        topPanel.add(viewDoctorsButton);
+
+        topPanel.add(admitInpatientButton);
+
+        panelmain.add(topPanel, BorderLayout.NORTH);
+        panelmain.add(new JScrollPane(textArea1), BorderLayout.CENTER);
+
+        registerButton.addActionListener(e -> registerPatient());
+        viewPatientsButton.addActionListener(e -> viewPatients());
+        addDoctorButton.addActionListener(e -> addDoctor());
+        viewDoctorsButton.addActionListener(e -> viewDoctors());
+        admitInpatientButton.addActionListener(e -> admitInpatient());
+        scheduleAppointmentButton.addActionListener(e -> scheduleAppointment());
+    }
+
+    private void registerPatient() {
+        String patientIDInput = patientIDField.getText();
+        String patientName = patientNameField.getText();
+
+        if (patientIDInput.isEmpty() || patientName.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Patient ID and Name cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int patientID;
+        try {
+            patientID = Integer.parseInt(patientIDInput);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "Patient ID must be a valid integer.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (isPatientIDTaken(patientID)) {
+            JOptionPane.showMessageDialog(null, "This Patient ID is already taken. Please enter a unique ID.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String patientType = JOptionPane.showInputDialog("Enter patient type (Outpatient/Inpatient):");
+
+        if (patientType == null) {
+            return;
+        }
+
+        Patient newPatient = null;
+
+        if ("Outpatient".equalsIgnoreCase(patientType)) {
+            String appointmentDate = JOptionPane.showInputDialog("Enter appointment date (YYYY-MM-DD):");
+
+            if (appointmentDate != null && !appointmentDate.isEmpty()) {
+                LocalDate today = LocalDate.now();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                LocalDate inputDate = LocalDate.parse(appointmentDate, formatter);
+
+                if (!inputDate.isEqual(today)) {
+                    JOptionPane.showMessageDialog(null, "Appointment date must be today's date (" + today + ").", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+
+            newPatient = new Outpatient(patientID, patientName, appointmentDate);
+        } else if ("Inpatient".equalsIgnoreCase(patientType)) {
+            String admissionDate = JOptionPane.showInputDialog("Enter admission date (YYYY-MM-DD):");
+
+            if (admissionDate != null && !admissionDate.isEmpty()) {
+                LocalDate today = LocalDate.now();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                LocalDate inputDate = LocalDate.parse(admissionDate, formatter);
+
+                if (!inputDate.isEqual(today)) {
+                    JOptionPane.showMessageDialog(null, "Admission date must be today's date (" + today + ").", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+
+            newPatient = new Inpatient(patientID, patientName, admissionDate);
+        } else {
+            JOptionPane.showMessageDialog(null, "Invalid patient type. Please enter 'Outpatient' or 'Inpatient'.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (newPatient != null) {
+            patients.add(newPatient);
+            textArea1.append("Patient " + patientName + " (" + patientType + ") registered successfully.\n");
+        }
+    }
+
+    private void viewPatients() {
+        textArea1.append("Displaying list of patients:\n");
+
+        if (patients.isEmpty()) {
+            textArea1.append("No patients available.\n");
+        } else {
+            for (Patient patient : patients) {
+                textArea1.append("Patient ID: " + patient.getPatientID() + ", Name: " + patient.getName() + "\n");
+            }
+        }
+    }
+
+    private void addDoctor() {
+        String doctorIDInput = JOptionPane.showInputDialog("Enter Doctor ID:");
+        String doctorName = JOptionPane.showInputDialog("Enter Doctor Name:");
+
+        if (doctorIDInput == null || doctorName == null || doctorIDInput.isEmpty() || doctorName.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Doctor ID and Name cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int doctorID;
+        try {
+            doctorID = Integer.parseInt(doctorIDInput);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "Doctor ID must be a valid integer.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (isDoctorIDTaken(doctorID)) {
+            JOptionPane.showMessageDialog(null, "This Doctor ID is already taken. Please enter a unique ID.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        Doctor newDoctor = new Doctor(doctorID, doctorName);
+        doctors.add(newDoctor);
+        textArea1.append("New doctor " + doctorName + " added successfully.\n");
+    }
+
+    private void viewDoctors() {
+        textArea1.append("Displaying list of doctors:\n");
+
+        if (doctors.isEmpty()) {
+            textArea1.append("No doctors available.\n");
+        } else {
+            for (Doctor doctor : doctors) {
+                textArea1.append("Doctor ID: " + doctor.getDoctorID() + ", Name: " + doctor.getDoctorName() + "\n");
+            }
+        }
+    }
+
+    private void admitInpatient() {
+        String patientIDInput = JOptionPane.showInputDialog("Enter Patient ID to admit:");
+
+        if (patientIDInput == null || patientIDInput.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Patient ID cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int patientID;
+        try {
+            patientID = Integer.parseInt(patientIDInput);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "Patient ID must be a valid integer.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        Patient patientToAdmit = null;
+        for (Patient patient : patients) {
+            if (patient.getPatientID() == patientID) {
+                patientToAdmit = patient;
+                break;
+            }
+        }
+
+        if (patientToAdmit == null) {
+            JOptionPane.showMessageDialog(null, "Patient with ID " + patientID + " not found.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (patientToAdmit instanceof Inpatient) {
+            JOptionPane.showMessageDialog(null, "Patient is already an inpatient.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String admissionDate = JOptionPane.showInputDialog("Enter admission date (YYYY-MM-DD):");
+        if (admissionDate != null && !admissionDate.isEmpty()) {
+            LocalDate today = LocalDate.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            LocalDate inputDate = LocalDate.parse(admissionDate, formatter);
+
+            if (!inputDate.isEqual(today)) {
+                JOptionPane.showMessageDialog(null, "Admission date must be today's date (" + today + ").", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            Inpatient admittedPatient = new Inpatient(patientToAdmit.getPatientID(), patientToAdmit.getName(), admissionDate);
+            patients.remove(patientToAdmit);
+            patients.add(admittedPatient);
+            textArea1.append("Patient " + patientToAdmit.getName() + " admitted as inpatient.\n");
+        }
+    }
+
+    private void scheduleAppointment() {
+        JOptionPane.showMessageDialog(null, "Appointment scheduling functionality to be implemented.");
+    }
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("E-Health Management System");
+        frame.setContentPane(new HealthManagementGUI().panelmain);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.pack();
+        frame.setVisible(true);
+    }
+
+    static class Doctor {
+        private int doctorID;
+        private String doctorName;
+
+        public Doctor(int doctorID, String doctorName) {
+            this.doctorID = doctorID;
+            this.doctorName = doctorName;
+        }
+
+        public int getDoctorID() {
+            return doctorID;
+        }
+
+        public String getDoctorName() {
+            return doctorName;
+        }
+    }
+
+    static abstract class Patient {
+        private int patientID;
+        private String name;
+
+        public Patient(int patientID, String name) {
+            this.patientID = patientID;
+            this.name = name;
+        }
+
+        public int getPatientID() {
+            return patientID;
+        }
+
+        public String getName() {
+            return name;
+        }
+    }
+
+    static class Outpatient extends Patient {
+        private String appointmentDate;
+
+        public Outpatient(int patientID, String name, String appointmentDate) {
+            super(patientID, name);
+            this.appointmentDate = appointmentDate;
+        }
+
+        public String getAppointmentDate() {
+            return appointmentDate;
+        }
+    }
+
+    static class Inpatient extends Patient {
+        private String admissionDate;
+
+        public Inpatient(int patientID, String name, String admissionDate) {
+            super(patientID, name);
+            this.admissionDate = admissionDate;
+        }
+
+        public String getAdmissionDate() {
+            return admissionDate;
+        }
+    }
+}
