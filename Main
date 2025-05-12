@@ -1,0 +1,207 @@
+import java.util.Scanner;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+
+public class Main {
+    private static boolean isValidAppointmentDate(String date) {
+        try {
+            LocalDate appointmentDate = LocalDate.parse(date, DateTimeFormatter.ISO_DATE);
+            return !appointmentDate.isBefore(LocalDate.now());
+        } catch (DateTimeParseException e) {
+            return false;
+        }
+    }
+
+    private static boolean isAdmissionDateToday(String date) {
+        try {
+            LocalDate admissionDate = LocalDate.parse(date, DateTimeFormatter.ISO_DATE);
+            return admissionDate.isEqual(LocalDate.now());
+        } catch (DateTimeParseException e) {
+            return false;
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        HealthSystemManager manager = new HealthSystemManager();
+
+        Doctor doctor1 = new Doctor(1, "Dr. zahran", "Cardiology");
+        Doctor doctor2 = new Doctor(2, "Dr. abdallah", "Neurology");
+        manager.addDoctor(doctor1);
+        manager.addDoctor(doctor2);
+
+        while (true) {
+            System.out.println("\n--- E-Health Management System ---");
+            System.out.println("1. Register a new Patient");
+            System.out.println("2. View Patients");
+            System.out.println("3. Schedule Appointment for Outpatient");
+            System.out.println("4. Admit Inpatient");
+            System.out.println("5. View Doctors");
+            System.out.println("6. Add Doctor");
+            System.out.println("7. Exit");
+            System.out.print("Please select an option (1-7): ");
+            int choice = scanner.nextInt();
+            scanner.nextLine();
+
+            switch (choice) {
+                case 1:
+                    int patientID;
+                    boolean idExists;
+                    do {
+                        System.out.print("Enter Patient ID: ");
+                        patientID = scanner.nextInt();
+                        scanner.nextLine();
+                        idExists = false;
+                        for (Patient p : manager.getPatients()) {
+                            if (p.getPatientID() == patientID) {
+                                idExists = true;
+                                System.out.println("Patient ID already exists. Please enter a unique ID.");
+                                break;
+                            }
+                        }
+                    } while (idExists);
+
+                    System.out.print("Enter Patient Name: ");
+                    String name = scanner.nextLine();
+                    System.out.print("Enter Patient Age: ");
+                    int age = scanner.nextInt();
+                    scanner.nextLine();
+                    System.out.print("Enter Patient Type (Outpatient/Inpatient): ");
+                    String patientType = scanner.nextLine();
+                    System.out.print("Enter Medical History: ");
+                    String medicalHistory = scanner.nextLine();
+
+                    Patient patient;
+                    if ("Outpatient".equalsIgnoreCase(patientType)) {
+                        String appointmentDate;
+                        boolean isValidDate;
+                        do {
+                            System.out.print("Enter Appointment Date (YYYY-MM-DD): ");
+                            appointmentDate = scanner.nextLine();
+                            isValidDate = isAdmissionDateToday(appointmentDate);
+                            if (!isValidDate) {
+                                System.out.println("Invalid appointment date. The appointment date must be today.");
+                            }
+                        } while (!isValidDate);
+                        patient = new Outpatient(patientID, name, age, medicalHistory, appointmentDate);
+                    } else {
+                        System.out.print("Enter Admission Date: ");
+                        String admissionDate = scanner.nextLine();
+                        patient = new Inpatient(patientID, name, age, medicalHistory, admissionDate);
+                    }
+                    manager.registerPatient(patient);
+                    System.out.println("Patient registered successfully!");
+                    break;
+
+                case 2:
+                    manager.viewPatients();
+                    break;
+
+                case 3:
+                    System.out.print("Enter Outpatient ID to schedule appointment: ");
+                    int outpatientID = scanner.nextInt();
+                    scanner.nextLine();
+                    Outpatient outpatient = findOutpatient(manager, outpatientID);
+
+                    if (outpatient != null) {
+                        String appointmentDate;
+                        boolean isValidDate;
+                        do {
+                            System.out.print("Enter Appointment Date (YYYY-MM-DD): ");
+                            appointmentDate = scanner.nextLine();
+                            isValidDate = isValidAppointmentDate(appointmentDate);
+                            if (!isValidDate) {
+                                System.out.println("Invalid appointment date. The date must be today or a future date.");
+                            }
+                        } while (!isValidDate);
+                        outpatient.setAppointmentDate(appointmentDate);
+                        manager.scheduleAppointment(outpatient);
+                        System.out.println("Appointment scheduled successfully!");
+                    } else {
+                        System.out.println("Outpatient not found.");
+                    }
+                    break;
+
+                case 4:
+                    System.out.print("Enter Inpatient ID to admit: ");
+                    int inpatientID = scanner.nextInt();
+                    scanner.nextLine();
+                    Inpatient inpatient = findInpatient(manager, inpatientID);
+
+                    if (inpatient != null) {
+                        String admissionDate;
+                        boolean isValidDate;
+                        do {
+                            System.out.print("Enter Admission Date (YYYY-MM-DD): ");
+                            admissionDate = scanner.nextLine();
+                            isValidDate = isAdmissionDateToday(admissionDate);
+                            if (!isValidDate) {
+                                System.out.println("Invalid admission date. Admission date must be today.");
+                            }
+                        } while (!isValidDate);
+                        inpatient.setAdmissionDate(admissionDate);
+                        manager.admitPatient(inpatient);
+                        System.out.println("Inpatient admitted successfully!");
+                    } else {
+                        System.out.println("Inpatient not found.");
+                    }
+                    break;
+
+                case 5:
+                    manager.viewDoctors();
+                    break;
+
+                case 6:
+                    int doctorID;
+                    boolean idTaken;
+                    do {
+                        System.out.print("Enter Doctor ID: ");
+                        doctorID = scanner.nextInt();
+                        scanner.nextLine();
+                        idTaken = manager.isDoctorIDTaken(doctorID);
+                        if (idTaken) {
+                            System.out.println("Doctor ID already exists. Please enter a unique ID.");
+                        }
+                    } while (idTaken);
+
+                    System.out.print("Enter Doctor Name: ");
+                    String doctorName = scanner.nextLine();
+                    System.out.print("Enter Doctor Specialization: ");
+                    String specialization = scanner.nextLine();
+
+                    Doctor doctor = new Doctor(doctorID, doctorName, specialization);
+                    manager.addDoctor(doctor);
+                    System.out.println("Doctor added successfully!");
+                    break;
+
+                case 7:
+                    System.out.println("Exiting the system.");
+                    scanner.close();
+                    return;
+
+                default:
+                    System.out.println("Invalid option. Please try again.");
+                    break;
+            }
+        }
+    }
+
+    private static Outpatient findOutpatient(HealthSystemManager manager, int id) {
+        for (Patient p : manager.getPatients()) {
+            if (p instanceof Outpatient && p.getPatientID() == id) {
+                return (Outpatient) p;
+            }
+        }
+        return null;
+    }
+
+    private static Inpatient findInpatient(HealthSystemManager manager, int id) {
+        for (Patient p : manager.getPatients()) {
+            if (p instanceof Inpatient && p.getPatientID() == id) {
+                return (Inpatient) p;
+            }
+        }
+        return null;
+    }
+}
