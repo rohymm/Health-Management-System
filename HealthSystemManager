@@ -1,0 +1,73 @@
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+public class HealthSystemManager {
+
+    private List<Patient> patients;
+    private List<Doctor> doctors;
+
+    public boolean isDoctorIDTaken(int id) {
+        for (Doctor doctor : doctors) {
+            if (doctor.getDoctorID() == id) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public HealthSystemManager() {
+        patients = new ArrayList<>();
+        doctors = new ArrayList<>();
+    }
+
+
+    public void registerPatient(Patient patient) {
+        patients.add(patient);
+    }
+
+
+
+    public void addDoctor(Doctor doctor) {
+        doctors.add(doctor);
+    }
+
+
+    public void viewPatients() {
+        if (patients.isEmpty()) {
+            System.out.println("No patients are registered.");
+        } else {
+            for (Patient patient : patients) {
+                System.out.println("Patient ID: " + patient.getPatientID() + ", Name: " + patient.getName() +
+                        ", Age: " + patient.getAge() + ", Medical History: " + patient.getMedicalHistory());
+            }
+        }
+    }
+
+
+    public void scheduleAppointment(Outpatient outpatient) {
+        System.out.println("Scheduling appointment for " + outpatient.getName() + " on " + outpatient.getAppointmentDate());
+    }
+
+
+    public void admitPatient(Inpatient inpatient) {
+        System.out.println("Admitting patient " + inpatient.getName() + " with ID: " + inpatient.getPatientID() +
+                " to the hospital. Admission Date: " + inpatient.getAdmissionDate());
+    }
+
+
+    public void viewDoctors() {
+        if (doctors.isEmpty()) {
+            System.out.println("No doctors are registered.");
+        } else {
+            for (Doctor doctor : doctors) {
+                System.out.println("Doctor ID: " + doctor.getDoctorID() + ", Name: " + doctor.getName() +
+                        ", Specialization: " + doctor.getSpecialization());
+            }
+        }
+    }
+
+    public List<Patient> getPatients() {
+        return patients;
+    }
+}
