@@ -1,0 +1,46 @@
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+
+public class Inpatient extends Patient {
+    private String admissionDate;
+
+    public Inpatient(int patientID, String name, int age, String medicalHistory, String admissionDate) {
+        super(patientID, name, age, medicalHistory);
+        if (!isAdmissionDateToday(admissionDate)) {
+            throw new IllegalArgumentException("Admission date must be today's date.");
+        }
+        this.admissionDate = admissionDate;
+    }
+
+    public String getAdmissionDate() {
+        return admissionDate;
+    }
+
+    public void setAdmissionDate(String admissionDate) {
+        if (!isAdmissionDateToday(admissionDate)) {
+            throw new IllegalArgumentException("Admission date must be today's date.");
+        }
+        this.admissionDate = admissionDate;
+    }
+
+    private static boolean isAdmissionDateToday(String date) {
+        try {
+            LocalDate admissionDate = LocalDate.parse(date, DateTimeFormatter.ISO_DATE);
+            return admissionDate.isEqual(LocalDate.now());
+        } catch (DateTimeParseException e) {
+            return false;
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "Inpatient{" +
+                "PatientID=" + getPatientID() +
+                ", Name='" + getName() + '\'' +
+                ", Age=" + getAge() +
+                ", MedicalHistory='" + getMedicalHistory() + '\'' +
+                ", AdmissionDate='" + admissionDate + '\'' +
+                '}';
+    }
+}
